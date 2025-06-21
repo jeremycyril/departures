@@ -157,7 +157,15 @@ export default function NameChainGame() {
     return (
       <div className="board-word">
         {word.split('').map((char, i) => (
-          <div key={i} className={`letter-tile flip ${feedback ? feedback[i] : 'gray'}`}>{char}</div>
+          <div 
+            key={i} 
+            className={`letter-tile flip ${feedback ? feedback[i] : 'gray'}`}
+            style={{
+              animationDelay: `${i * 0.2}s`
+            }}
+          >
+            {char}
+          </div>
         ))}
       </div>
     );
@@ -191,7 +199,7 @@ export default function NameChainGame() {
 
         <div className="departure-board">
           <div className="board-row board-header">
-            <div>Reusable</div><div>Guess</div><div>Status</div><div>Hint</div><div>Progress</div>
+            <div className="header-text">Reusable</div><div className="header-text">Guess</div><div className="header-text">Status</div><div className="header-text">Hint</div><div className="header-text">Progress</div>
           </div>
           {fullBoardRows}
         </div>
