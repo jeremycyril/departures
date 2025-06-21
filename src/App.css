@@ -1,0 +1,113 @@
+
+/* App_Board.css - departure board style */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+body {
+  font-family: 'Share Tech Mono', monospace;
+  background-color: #111;
+  color: #eee;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.game-container {
+  max-width: 900px;
+  margin: auto;
+  padding: 2em;
+  background: #1b1b1b;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  margin-top: 2em;
+}
+
+header {
+  border-bottom: 2px dashed #555;
+  margin-bottom: 1em;
+  padding-bottom: 1em;
+  color: #ccc;
+}
+
+.subhead {
+  font-size: 1.1em;
+  margin: 0.5em 0;
+  color: #aaa;
+}
+
+.departure-board {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.25em;
+  margin-top: 1em;
+  font-size: 1em;
+}
+
+.board-row {
+  display: contents;
+}
+
+.board-header {
+  font-weight: bold;
+  background-color: #222;
+  color: #ffda44;
+}
+
+.board-row > div {
+  padding: 0.6em;
+  border: 1px solid #333;
+  background-color: #1f1f1f;
+  color: #eee;
+}
+
+.board-word {
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  color: #ffeb3b;
+}
+
+.input-zone {
+  display: flex;
+  justify-content: center;
+  gap: 1em;
+  margin-top: 2em;
+  flex-wrap: wrap;
+}
+
+.input-box {
+  font-size: 1.2em;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  border: 1px solid #444;
+  width: 60%;
+  text-align: center;
+  background: #222;
+  color: #eee;
+}
+
+.btn {
+  padding: 0.5em 1em;
+  border: none;
+  border-radius: 6px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+}
+
+.btn.submit {
+  background-color: #007acc;
+}
+
+.btn.reset {
+  background-color: #b20000;
+}
+
+.btn.clue {
+  background-color: #8e44ad;
+}
+
+.status-msg {
+  font-size: 1em;
+  margin-top: 1em;
+  color: #ccc;
+}

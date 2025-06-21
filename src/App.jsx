@@ -1,0 +1,215 @@
+// App.jsx — Solari board integration
+import { useState, useEffect } from "react";
+import "./App_Board_Animated.css";
+
+const PLACE_NAMES = new Set([
+  "PARIS", "TOKYO", "SEOUL", "DOHA", "OSAKA", "LUZON", "PRATO", "PROVO", "KYOTO",
+  "PUNE", "CAGAYAN", "HOBART", "LOMZA", "HANOI", "SUCRE", "SYDNEY", "DURBAN", "BAKU",
+  "ROME", "BERLIN", "BOSTON", "DALLAS", "VIENNA", "MOSCOW", "MUNICH", "NAPLES",
+  "OSLO", "ZURICH", "LAGOS", "JAKARTA"
+]);
+
+const START = "PARIS";
+const END = "PROVO";
+const MAX_RESETS = 3;
+const MAX_GUESSES = 12;
+
+const CLUES = [
+  "City ranked among the most conservative in the U.S.",
+  "Nicknamed 'The Garden City'",
+  "Home to large faith-based university",
+  "Fourth-largest city in Utah",
+  "South of Salt Lake City, on Utah Lake"
+];
+
+const generateGibberish = (length) => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let word = "";
+  for (let i = 0; i < length; i++) {
+    word += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return word;
+};
+
+export default function NameChainGame() {
+  const [dictionary, setDictionary] = useState(new Set());
+  const [guesses, setGuesses] = useState([START]);
+  const [input, setInput] = useState("");
+  const [status, setStatus] = useState("");
+  const [gameOver, setGameOver] = useState(false);
+  const [resets, setResets] = useState(0);
+  const [unlockedLetters, setUnlockedLetters] = useState(new Set());
+  const [clueIndex, setClueIndex] = useState(0);
+
+  useEffect(() => {
+    fetch("/words.txt")
+      .then(res => res.text())
+      .then(text => {
+        const words = new Set(
+          text.toUpperCase().split("\n").map(word => word.trim())
+        );
+        setDictionary(words);
+      });
+  }, []);
+
+  const countNewLettersUsed = (a, b, unlocked) => {
+    const aChars = new Set(a);
+    const bChars = new Set(b);
+    let count = 0;
+    for (const char of bChars) {
+      if (!aChars.has(char) && !unlocked.has(char)) {
+        count++;
+      }
+    }
+    return count;
+  };
+
+  const getDistance = (a, b) => {
+    const aChars = a.split('').sort().join('');
+    const bChars = b.split('').sort().join('');
+    let distance = Math.abs(a.length - b.length);
+    
+    const minLength = Math.min(a.length, b.length);
+    for (let i = 0; i < minLength; i++) {
+      if (aChars[i] !== bChars[i]) {
+        distance++;
+      }
+    }
+    return distance;
+  };
+
+  const getLetterFeedback = (guess, answer) => {
+    return guess.split('').map((char, i) => {
+      if (char === answer[i]) return 'green';
+      else if (answer.includes(char)) return 'yellow';
+      else return 'gray';
+    });
+  };
+
+  const handleSubmit = () => {
+    const current = guesses[guesses.length - 1];
+    const next = input.toUpperCase();
+
+    if (next.length < 3 || next.length > 10) {
+      setStatus(`Word must be 3-10 letters long`);
+      return;
+    }
+    if (!dictionary.has(next)) {
+      setStatus("Not in dictionary");
+      return;
+    }
+    if (countNewLettersUsed(current, next, unlockedLetters) > 2) {
+      setStatus("Too many new letters used! Only two new letters allowed unless reused");
+      return;
+    }
+
+    const newGuesses = [...guesses, next];
+    const previousDistance = getDistance(current, END);
+    const newDistance = getDistance(next, END);
+
+    let feedback = "";
+    if (newDistance < previousDistance) feedback = "(Getting closer)";
+    else if (newDistance > previousDistance) feedback = "(Getting farther)";
+    else feedback = "(Same distance)";
+
+    const feedbackColors = getLetterFeedback(next, END);
+    const newUnlocked = new Set(unlockedLetters);
+    next.split('').forEach((char, i) => {
+      if (feedbackColors[i] === 'green' || feedbackColors[i] === 'yellow') {
+        newUnlocked.add(char);
+      }
+    });
+
+    setUnlockedLetters(newUnlocked);
+    setGuesses(newGuesses);
+    setInput("");
+
+    if (next === END) {
+      setStatus("🎉 You found the mystery place: " + END);
+      setGameOver(true);
+    } else if (newGuesses.length - 1 >= MAX_GUESSES || resets >= MAX_RESETS) {
+      setGameOver(true);
+      setStatus(`Out of guesses or resets! The mystery place was: ${END}`);
+    } else {
+      setStatus(feedback);
+    }
+  };
+
+  const handleReset = () => {
+    if (resets < MAX_RESETS) {
+      setGuesses([START]);
+      setResets(resets + 1);
+      setUnlockedLetters(new Set());
+      setClueIndex(0);
+      setStatus("");
+    } else {
+      setStatus("No resets remaining");
+    }
+  };
+
+  const revealNextClue = () => {
+    if (clueIndex < CLUES.length) {
+      setClueIndex(clueIndex + 1);
+    }
+  };
+
+  const renderTiles = (word, feedback) => {
+    return (
+      <div className="board-word">
+        {word.split('').map((char, i) => (
+          <div key={i} className={`letter-tile flip ${feedback ? feedback[i] : 'gray'}`}>{char}</div>
+        ))}
+      </div>
+    );
+  };
+
+  const fullBoardRows = Array.from({ length: MAX_GUESSES }, (_, i) => {
+    const guess = guesses[i];
+    const isActive = !!guess;
+    const word = isActive ? guess : generateGibberish(5);
+    const feedback = isActive ? getLetterFeedback(guess, END) : null;
+    const signal = isActive ? getDistance(guess, END) : null;
+
+    return (
+      <div key={i} className="board-row">
+        <div>{[...unlockedLetters].join(", ") || "—"}</div>
+        <div>{renderTiles(word, feedback)}</div>
+        <div>{isActive ? (guess === END ? "ARRIVED" : "EN ROUTE") : "WAITING"}</div>
+        <div>{isActive && i === guesses.length - 1 && clueIndex > 0 ? CLUES[clueIndex - 1] : "—"}</div>
+        <div>{isActive ? (signal <= 1 ? "FINAL APPR" : signal <= 3 ? "ON COURSE" : "OFF COURSE") : "STANDBY"}</div>
+      </div>
+    );
+  });
+
+  return (
+    <div className="game-container">
+      <header>
+        <h1>🛫 NAME CHAIN: DEPARTURES</h1>
+        <p className="subhead">Reusable: {[...unlockedLetters].join(", ") || "—"} | Resets Left: {MAX_RESETS - resets}</p>
+      </header>
+
+      <div className="departure-board">
+        <div className="board-row board-header">
+          <div>Reusable</div><div>Guess</div><div>Status</div><div>Hint</div><div>Progress</div>
+        </div>
+        {fullBoardRows}
+      </div>
+
+      {!gameOver && (
+        <div className="input-zone">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Enter next stop..."
+            className="input-box"
+          />
+          <button className="btn submit" onClick={handleSubmit}>Board</button>
+          <button className="btn reset" onClick={handleReset}>Rebook</button>
+          {clueIndex < CLUES.length && <button className="btn clue" onClick={revealNextClue}>Request Hint</button>}
+        </div>
+      )}
+
+      {status && <p className="status-msg">{status}</p>}
+    </div>
+  );
+}
