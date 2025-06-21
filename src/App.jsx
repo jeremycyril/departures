@@ -12,7 +12,7 @@ const PLACE_NAMES = new Set([
 const START = "PARIS";
 const END = "PROVO";
 const MAX_RESETS = 3;
-const MAX_GUESSES = 12;
+const MAX_GUESSES = 6;
 
 const CLUES = [
   "City ranked among the most conservative in the U.S.",
@@ -171,6 +171,25 @@ export default function NameChainGame() {
     );
   };
 
+  const renderSolariText = (text, columnIndex, rowIndex) => {
+    const chars = text.toString().split('');
+    return (
+      <div className="solari-column">
+        {chars.map((char, i) => (
+          <div 
+            key={`${rowIndex}-${columnIndex}-${i}-${char}`}
+            className="letter-tile flip"
+            style={{
+              animationDelay: `${(columnIndex * 0.3) + (i * 0.1)}s`
+            }}
+          >
+            {char}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const fullBoardRows = Array.from({ length: MAX_GUESSES }, (_, i) => {
     const guess = guesses[i];
     const isActive = !!guess;
@@ -180,11 +199,11 @@ export default function NameChainGame() {
 
     return (
       <div key={i} className="board-row">
-        <div>{[...unlockedLetters].join(", ") || "—"}</div>
+        <div>{renderSolariText([...unlockedLetters].join(", ") || "—", 0, i)}</div>
         <div>{renderTiles(word, feedback)}</div>
-        <div>{isActive ? (guess === END ? "ARRIVED" : "EN ROUTE") : "WAITING"}</div>
-        <div>{isActive && i === guesses.length - 1 && clueIndex > 0 ? CLUES[clueIndex - 1] : "—"}</div>
-        <div>{isActive ? (signal <= 1 ? "FINAL APPR" : signal <= 3 ? "ON COURSE" : "OFF COURSE") : "STANDBY"}</div>
+        <div>{renderSolariText(isActive ? (guess === END ? "ARRIVED" : "EN ROUTE") : "WAITING", 2, i)}</div>
+        <div>{renderSolariText(isActive && i === guesses.length - 1 && clueIndex > 0 ? CLUES[clueIndex - 1] : "—", 3, i)}</div>
+        <div>{renderSolariText(isActive ? (signal <= 1 ? "FINAL APPR" : signal <= 3 ? "ON COURSE" : "OFF COURSE") : "STANDBY", 4, i)}</div>
       </div>
     );
   });
