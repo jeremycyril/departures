@@ -182,34 +182,50 @@ export default function NameChainGame() {
   });
 
   return (
-    <div className="game-container">
-      <header>
-        <h1>🛫 NAME CHAIN: DEPARTURES</h1>
-        <p className="subhead">Reusable: {[...unlockedLetters].join(", ") || "—"} | Resets Left: {MAX_RESETS - resets}</p>
-      </header>
+    <div className="main-flex">
+      <div className="game-container">
+        <header>
+          <h1>🛫 DEPARTURES</h1>
+          <p className="subhead">Reusable: {[...unlockedLetters].join(", ") || "—"} | Resets Left: {MAX_RESETS - resets}</p>
+        </header>
 
-      <div className="departure-board">
-        <div className="board-row board-header">
-          <div>Reusable</div><div>Guess</div><div>Status</div><div>Hint</div><div>Progress</div>
+        <div className="departure-board">
+          <div className="board-row board-header">
+            <div>Reusable</div><div>Guess</div><div>Status</div><div>Hint</div><div>Progress</div>
+          </div>
+          {fullBoardRows}
         </div>
-        {fullBoardRows}
+
+        {!gameOver && (
+          <div className="input-zone">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Enter next stop..."
+              className="input-box"
+            />
+            <button className="btn submit" onClick={handleSubmit}>Board</button>
+            <button className="btn reset" onClick={handleReset}>Rebook</button>
+            {clueIndex < CLUES.length && <button className="btn clue" onClick={revealNextClue}>Request Hint</button>}
+          </div>
+        )}
+
+        {status && <p className="status-msg">{status}</p>}
       </div>
-
-      {!gameOver && (
-        <div className="input-zone">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Enter next stop..."
-            className="input-box"
-          />
-          <button className="btn submit" onClick={handleSubmit}>Board</button>
-          <button className="btn reset" onClick={handleReset}>Rebook</button>
-          {clueIndex < CLUES.length && <button className="btn clue" onClick={revealNextClue}>Request Hint</button>}
-        </div>
-      )}
-
-      {status && <p className="status-msg">{status}</p>}
+      <aside className="rules-box">
+        <h2>How to Play</h2>
+        <ul>
+          <li>Welcome aboard your journey from {START} to your mystery destination</li>
+		      <li> Please ensure each guess is a real word, 3–10 letters in length, before takeoff. </li>
+	        <li>You are permitted to bring only 2 new letters per guess. All other letters must be recycled from previous flights.</li>
+	        <li>Letters highlighted in green or yellow are now cleared for future travel—feel free to use them again.</li>
+	        <li>You’ll have {MAX_GUESSES} guesses to reach your final destination, along with {MAX_RESETS} resets for unexpected turbulence.</li>
+	        <li>Should you lose your way, hints will descend from the overhead compartment to assist you.</li>
+          <li>Once you reach your destination, you can continue playing with new words or reset the game.</li>
+          <li>Thank You for flying Departures Air</li>
+        
+        </ul>
+      </aside>
     </div>
   );
 }
