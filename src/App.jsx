@@ -59,6 +59,8 @@ export default function NameChainGame() {
   const [showRulesHover, setShowRulesHover] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [currentHint, setCurrentHint] = useState("");
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const MAX_HINTS = 5;
 
   useEffect(() => {
     fetch("/words.txt")
@@ -170,8 +172,9 @@ export default function NameChainGame() {
   };
 
   const revealNextClue = () => {
-    if (clueIndex < CLUES.length) {
+    if (clueIndex < CLUES.length && hintsUsed < MAX_HINTS) {
       setClueIndex(clueIndex + 1);
+      setHintsUsed(hintsUsed + 1);
       setCurrentHint(CLUES[clueIndex]);
       setShowHint(true);
       // Auto-hide hint after 5 seconds
@@ -348,21 +351,31 @@ export default function NameChainGame() {
             />
             <button className="btn submit" onClick={handleSubmit}>Board</button>
             <button className="btn reset" onClick={handleReset}>Rebook</button>
-            {clueIndex < CLUES.length && (
-              <button 
-                className="btn clue" 
-                onClick={revealNextClue}
-                onMouseEnter={() => {
-                  if (clueIndex > 0) {
-                    setCurrentHint(CLUES[clueIndex - 1]);
-                    setShowHint(true);
-                  }
-                }}
-                onMouseLeave={() => setShowHint(false)}
-              >
-                Request Hint {clueIndex > 0 && '(Hover to see last hint)'}
-              </button>
-            )}
+          </div>
+        )}
+        
+        {/* Boarding Pass Hint Button */}
+        {!gameOver && (
+          <div className="hint-button-container">
+            <button 
+              className="hint-button boarding-pass"
+              onClick={revealNextClue}
+              disabled={hintsUsed >= MAX_HINTS || clueIndex >= CLUES.length}
+            >
+              <div className="boarding-pass-content">
+                <div className="boarding-pass-icon">🎫</div>
+                <div className="boarding-pass-text">HINT</div>
+                <div className="hint-lights">
+                  {Array.from({ length: MAX_HINTS }, (_, i) => (
+                    <div 
+                      key={i} 
+                      className={`hint-light ${i < hintsUsed ? 'used' : 'available'}`}
+                    >
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </button>
           </div>
         )}
 

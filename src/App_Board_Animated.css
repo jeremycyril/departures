@@ -9,23 +9,39 @@ body {
   text-align: center;
 }
 
+/* Ensure proper viewport handling for mobile */
+html {
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
 .game-container {
   max-width: 900px;
   margin: auto;
-  padding: 2em;
+  padding: 2rem;
   background: #1b1b1b;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-  margin-top: 2em;
+  margin-top: 2rem;
   flex: 1;
   min-width: 0;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
   .game-container {
-    padding: 1em;
-    margin-top: 0;
+    padding: 1rem;
+    margin: 0.5rem;
     border-radius: 8px;
+    max-width: none;
+    width: calc(100% - 1rem);
+  }
+
+  body {
+    font-size: 14px;
   }
 }
 
@@ -373,21 +389,34 @@ header h1 {
 .input-zone {
   display: flex;
   justify-content: center;
-  gap: 1em;
-  margin-top: 2em;
+  gap: 1rem;
+  margin-top: 2rem;
   flex-wrap: wrap;
+}
+
+/* Hint Button Container */
+.hint-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
 }
 
 @media (max-width: 768px) {
   .input-zone {
-    gap: 0.5em;
-    margin-top: 1.5em;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .hint-button-container {
+    margin-top: 0.8rem;
   }
 }
 
 .input-box {
-  font-size: 1.2em;
-  padding: 0.5em 1em;
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
   border-radius: 6px;
   border: 1px solid #444;
   width: 60%;
@@ -395,33 +424,48 @@ header h1 {
   background: #222;
   color: #eee;
   min-width: 200px;
+  max-width: 400px;
 }
 
 @media (max-width: 768px) {
   .input-box {
     width: 100%;
-    font-size: 1.1em;
-    margin-bottom: 0.5em;
+    max-width: none;
+    font-size: 1rem;
+    margin-bottom: 0.8rem;
+    padding: 0.75rem;
+    min-height: 44px; /* Touch-friendly */
   }
 }
 
 .btn {
-  padding: 0.5em 1em;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 6px;
-  font-size: 1em;
+  font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   color: #fff;
   min-width: 80px;
+  transition: all 0.2s ease;
 }
 
 @media (max-width: 768px) {
   .btn {
-    padding: 0.6em 0.8em;
-    font-size: 0.9em;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    min-width: 120px;
+    min-height: 44px; /* Touch-friendly */
+    margin: 0.25rem;
+  }
+  
+  .input-zone {
+    width: 100%;
+  }
+  
+  .input-zone > .btn {
     flex: 1;
-    min-width: 0;
+    max-width: 150px;
   }
 }
 
@@ -683,12 +727,13 @@ header h1 {
   background: linear-gradient(135deg, #2c3e50, #34495e);
   border: 2px solid #ffd700;
   border-radius: 8px;
-  padding: 0.5rem 0.8rem;
+  padding: 0.8rem 1.2rem;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  min-width: 100px;
+  min-width: 140px;
+  min-height: 60px;
 }
 
 .hint-button.boarding-pass:hover:not(:disabled) {
@@ -748,6 +793,7 @@ header h1 {
   box-shadow: 0 0 4px rgba(244, 67, 54, 0.6);
 }
 
+/* Enhanced Mobile Responsiveness */
 @media (max-width: 768px) {
   .hint-popup {
     max-width: 90vw;
@@ -755,25 +801,143 @@ header h1 {
   }
   
   .board-row {
-    gap: 1em;
-    padding: 0.6em 0.8em;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 0;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.5rem;
   }
   
   .board-header {
-    gap: 1em;
-    padding: 0.6em 0.8em;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .header-column {
+    font-size: 0.75rem;
   }
   
   .column-section {
-    gap: 0.04em;
+    gap: 0.03rem;
   }
   
   .letter-tile {
-    padding: 0.25em 0.3em;
-    font-size: 0.8em;
-    min-width: 16px;
-    min-height: 26px;
+    padding: 0.2rem 0.25rem;
+    font-size: 0.7rem;
+    min-width: 14px;
+    min-height: 22px;
+  }
+  
+  .departure-board {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .blank-solari-row {
+    gap: 0.03rem;
+    margin: 0.5rem 0;
+    padding: 0.3rem;
+  }
+  
+  .hint-button.boarding-pass {
+    min-width: 120px;
+    min-height: 50px;
+    padding: 0.6rem 1rem;
+  }
+  
+  .boarding-pass-icon {
+    font-size: 1rem;
+  }
+  
+  .boarding-pass-text {
+    font-size: 0.6rem;
+  }
+  
+  .hint-lights {
+    gap: 0.15rem;
+  }
+  
+  .hint-light {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .game-container {
+    margin: 0.25rem;
+    padding: 0.75rem;
+    width: calc(100% - 0.5rem);
+  }
+  
+  .letter-tile {
+    padding: 0.15rem 0.2rem;
+    font-size: 0.65rem;
+    min-width: 12px;
+    min-height: 20px;
+  }
+  
+  .board-header {
+    gap: 0.5rem;
+    padding: 0.4rem;
+  }
+  
+  .header-column {
+    font-size: 0.7rem;
+  }
+  
+  .board-row {
+    padding: 0.3rem;
+  }
+  
+  .input-box {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
+  
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    min-width: 100px;
+  }
+  
+  header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .help-icon {
+    font-size: 1.5rem;
+  }
+  
+  .subhead {
+    font-size: 0.9rem;
+  }
+}
+
+/* Very small devices */
+@media (max-width: 360px) {
+  .letter-tile {
+    padding: 0.1rem 0.15rem;
+    font-size: 0.6rem;
+    min-width: 10px;
+    min-height: 18px;
+  }
+  
+  .column-section {
+    gap: 0.02rem;
+  }
+  
+  .header-column {
+    font-size: 0.65rem;
+  }
+  
+  .board-row {
+    padding: 0.2rem;
+  }
+  
+  .hint-button.boarding-pass {
+    min-width: 100px;
+    min-height: 45px;
+    padding: 0.5rem 0.8rem;
   }
 }
