@@ -518,105 +518,72 @@ header h1 {
   overflow: hidden;
 }
 
-/* How to Play Sidebar - Hidden by default, shown as popup */
-.sidebar-container {
-  display: none;
-}
-
-.how-to-play-sidebar {
-  display: none;
-}
-
-/* NYT-style Instructions Popup */
-.instructions-popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  max-width: 500px;
-  width: 90vw;
-  max-height: 80vh;
-  overflow-y: auto;
-  z-index: 1000;
-  font-family: 'Georgia', serif;
-}
-
-.instructions-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-}
-
-.instructions-header {
-  padding: 1.5rem 2rem 1rem 2rem;
-  border-bottom: 1px solid #eee;
+/* Right Side Hint Panel */
+.hint-panel {
+  flex-shrink: 0;
+  width: 250px;
   position: relative;
 }
 
-.instructions-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #333;
-  text-align: center;
+.hint-display-panel {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  position: relative;
+  animation: fadeInSlide 0.3s ease;
 }
 
-.instructions-close {
+.hint-display-header {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1rem;
+  color: #ffd700;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 0.5rem;
+}
+
+.hint-display-content {
+  color: #eee;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.hint-display-close {
   position: absolute;
-  top: 1rem;
-  right: 1.5rem;
+  top: 0.5rem;
+  right: 0.8rem;
   background: none;
   border: none;
-  font-size: 1.5rem;
-  color: #666;
+  color: #ccc;
+  font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.25rem;
   line-height: 1;
+  transition: color 0.2s ease;
 }
 
-.instructions-close:hover {
-  color: #333;
+.hint-display-close:hover {
+  color: #ffd700;
 }
 
-.instructions-content {
-  padding: 1.5rem 2rem 2rem 2rem;
-  color: #333;
-  line-height: 1.6;
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.instructions-content h3 {
-  margin: 1.5rem 0 0.5rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
-}
-
-.instructions-content h3:first-child {
-  margin-top: 0;
-}
-
-.instructions-content p {
-  margin: 0 0 1rem 0;
-  font-size: 0.95rem;
-}
-
-.instructions-content ul {
-  margin: 0 0 1rem 0;
-  padding-left: 1.5rem;
-}
-
-.instructions-content li {
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
-}
 
 .sidebar-header {
   background-color: #1a1a1a;
@@ -669,22 +636,24 @@ header h1 {
     padding: 1rem;
   }
   
-  .instructions-popup {
-    max-width: 95vw;
-    max-height: 85vh;
-    max-height: 85dvh;
+  .hint-panel {
+    width: 100%;
+    order: 3;
   }
   
-  .instructions-content {
-    padding: 1rem 1.5rem 1.5rem 1.5rem;
+  .hint-display-panel {
+    margin-top: 0.5rem;
+    padding: 0.8rem;
   }
   
-  .instructions-header {
-    padding: 1rem 1.5rem 0.5rem 1.5rem;
+  .hint-display-header {
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
   }
   
-  .instructions-title {
-    font-size: 1.3rem;
+  .hint-display-content {
+    font-size: 0.8rem;
+    margin-bottom: 0.8rem;
   }
 }
 

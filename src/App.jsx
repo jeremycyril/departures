@@ -56,7 +56,8 @@ export default function NameChainGame() {
   const [unlockedLetters, setUnlockedLetters] = useState(new Set());
   const [clueIndex, setClueIndex] = useState(0);
   const [showRules, setShowRules] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [showQuickStart, setShowQuickStart] = useState(true);
+  const [showHintDisplay, setShowHintDisplay] = useState(false);
   const [showRulesHover, setShowRulesHover] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [currentHint, setCurrentHint] = useState("");
@@ -177,9 +178,8 @@ export default function NameChainGame() {
       setClueIndex(clueIndex + 1);
       setHintsUsed(hintsUsed + 1);
       setCurrentHint(CLUES[clueIndex]);
-      setShowHint(true);
-      // Auto-hide hint after 5 seconds
-      setTimeout(() => setShowHint(false), 5000);
+      // Auto-hide hint display after 8 seconds
+      setTimeout(() => setShowHintDisplay(false), 8000);
     }
   };
 
@@ -318,7 +318,7 @@ export default function NameChainGame() {
               className="help-icon"
               onMouseEnter={() => setShowRulesHover(true)}
               onMouseLeave={() => setShowRulesHover(false)}
-              onClick={() => setShowInstructions(true)}
+              onClick={() => setShowRules(true)}
             >
               ℹ️
             </button>
@@ -394,45 +394,60 @@ export default function NameChainGame() {
         )}
       </div>
       
-      {/* NYT-style Instructions Popup */}
-      {showInstructions && (
-        <>
-          <div className="instructions-overlay" onClick={() => setShowInstructions(false)}></div>
-          <div className="instructions-popup">
-            <div className="instructions-header">
-              <h1 className="instructions-title">How to Play DEPARTURES</h1>
-              <button className="instructions-close" onClick={() => setShowInstructions(false)}>×</button>
+      {/* Right Side Hint Panel */}
+      {!gameOver && (
+        <div className="hint-panel">
+          <button 
+            className="hint-button boarding-pass"
+            onClick={() => {
+              revealNextClue();
+              setShowHintDisplay(true);
+            }}
+            disabled={hintsUsed >= MAX_HINTS || clueIndex >= CLUES.length}
+          >
+            <div className="boarding-pass-content">
+              <div className="boarding-pass-icon">🎫</div>
+              <div className="boarding-pass-text">HINT</div>
+              <div className="hint-lights">
+                {Array.from({ length: MAX_HINTS }, (_, i) => (
+                  <div 
+                    key={i} 
+                    className={`hint-light ${i < hintsUsed ? 'used' : 'available'}`}
+                  >
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="instructions-content">
-              <h3>Objective</h3>
-              <p>Find the mystery destination starting from PARIS in 6 guesses or fewer.</p>
-              
-              <h3>Rules</h3>
+          </button>
+          
+          {showHintDisplay && currentHint && (
+            <div className="hint-display-panel">
+              <div className="hint-display-header">✈️ FLIGHT HINT</div>
+              <div className="hint-display-content">{currentHint}</div>
+              <button className="hint-display-close" onClick={() => setShowHintDisplay(false)}>×</button>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Quick Start Guide */}
+      {showQuickStart && (
+        <div className="rules-modal-overlay" onClick={() => setShowQuickStart(false)}>
+          <div className="rules-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="close-button" onClick={() => setShowQuickStart(false)}>×</button>
+            <aside className="rules-box">
+              <h2>Welcome to DEPARTURES</h2>
+              <p><strong>Find the mystery destination starting from {START} in 6 guesses!</strong></p>
               <ul>
                 <li>Each guess must be a real word (3-10 letters)</li>
-                <li>You can only add 2 new letters per guess</li>
-                <li>Reuse letters from previous guesses</li>
-                <li>Green and yellow letters are your "carry-on" - use them freely</li>
+                <li>Only 2 new letters per guess - reuse previous letters</li>
+                <li>🟢 Green = correct position, 🟡 Yellow = wrong position</li>
+                <li>3 resets and 5 hints available</li>
               </ul>
-              
-              <h3>Resources</h3>
-              <ul>
-                <li>6 guesses to reach your destination</li>
-                <li>3 resets available if you get stuck</li>
-                <li>5 hints to help guide your journey</li>
-              </ul>
-              
-              <h3>Color Guide</h3>
-              <ul>
-                <li><strong>Green:</strong> Letter is in the correct position</li>
-                <li><strong>Yellow:</strong> Letter is in the word but wrong position</li>
-                <li><strong>Gray:</strong> Letter is not in the target word</li>
-              </ul>
-              
-              <p><em>Thank you for flying Departure Air!</em></p>
-            </div>
+              <p><em>Click anywhere to start your journey!</em></p>
+            </aside>
           </div>
-        </>
+        </div>
       )}
       
       {showRules && (
@@ -440,17 +455,32 @@ export default function NameChainGame() {
           <div className="rules-modal" onClick={(e) => e.stopPropagation()}>
             <button className="close-button" onClick={() => setShowRules(false)}>×</button>
             <aside className="rules-box">
-              <h2>How to Play</h2>
+              <h2>Flight Plan</h2>
+              <p>Welcome aboard your journey from {START} to your mystery destination.</p>
+              
+              <h3>Pre-Flight Instructions</h3>
               <ul>
-                <li>Welcome aboard your journey from {START} to your mystery destination</li>
-                <li>Please ensure each guess is a real word, 3-10 letters in length, before takeoff.</li>
-                <li>You are permitted to bring only 2 new letters per guess. All other letters must be recycled from previous flights.</li>
-                <li>Letters highlighted in green or yellow are your carry-on items, feel free to use them again.</li>
-                <li>You'll have {MAX_GUESSES} guesses to reach your final destination, along with {MAX_RESETS} resets for unexpected turbulence.</li>
-                <li>Should you lose your way, hints will descend from the overhead compartment to assist you.</li>
-                <li>Once you reach your destination, check back tomorrow for your next departure.</li>
-                <li>Thank You for flying Departures Air</li>
+                <li>Each guess must be a real word (3-10 letters) to clear for takeoff</li>
+                <li>You may board with only 2 new letters per flight - all other letters must come from your previous journeys</li>
+                <li>There are {MAX_GUESSES} flights available to reach your final destination</li>
               </ul>
+              
+              <h3>In-Flight Services</h3>
+              <ul>
+                <li>{MAX_RESETS} resets available for unexpected turbulence</li>
+                <li>Should you lose your way, 5 complimentary hints are available with your call button</li>
+              </ul>
+              
+              <h3>Cabin Crew Signals</h3>
+              <ul>
+                <li>🟢 Letter secured in correct position</li>
+                <li>🟡 Letter in transit (right letter, wrong position)</li>
+                <li>⬜ Letter left at departure gate (not in destination)</li>
+              </ul>
+              
+              <p>Letters highlighted in 🟢 green or 🟡 yellow are your carry-on items, feel free to use them again.</p>
+              
+              <p><em>Thank You for flying Departures Air</em></p>
             </aside>
           </div>
         </div>
