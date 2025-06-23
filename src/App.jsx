@@ -56,6 +56,7 @@ export default function NameChainGame() {
   const [unlockedLetters, setUnlockedLetters] = useState(new Set());
   const [clueIndex, setClueIndex] = useState(0);
   const [showRules, setShowRules] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [showRulesHover, setShowRulesHover] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [currentHint, setCurrentHint] = useState("");
@@ -317,14 +318,14 @@ export default function NameChainGame() {
               className="help-icon"
               onMouseEnter={() => setShowRulesHover(true)}
               onMouseLeave={() => setShowRulesHover(false)}
-              onClick={() => setShowRules(true)}
+              onClick={() => setShowInstructions(true)}
             >
               ℹ️
             </button>
             {showRulesHover && (
               <div className="help-hover">
                 <h3>How to Play</h3>
-                <p>Click for full rules</p>
+                <p>Click for instructions</p>
               </div>
             )}
           </div>
@@ -393,23 +394,46 @@ export default function NameChainGame() {
         )}
       </div>
       
-      {/* How to Play Sidebar */}
-      <div className="sidebar-container">
-        <div className="how-to-play-sidebar">
-          <div className="sidebar-header">
-            <h3>How to Play</h3>
+      {/* NYT-style Instructions Popup */}
+      {showInstructions && (
+        <>
+          <div className="instructions-overlay" onClick={() => setShowInstructions(false)}></div>
+          <div className="instructions-popup">
+            <div className="instructions-header">
+              <h1 className="instructions-title">How to Play DEPARTURES</h1>
+              <button className="instructions-close" onClick={() => setShowInstructions(false)}>×</button>
+            </div>
+            <div className="instructions-content">
+              <h3>Objective</h3>
+              <p>Find the mystery destination starting from PARIS in 6 guesses or fewer.</p>
+              
+              <h3>Rules</h3>
+              <ul>
+                <li>Each guess must be a real word (3-10 letters)</li>
+                <li>You can only add 2 new letters per guess</li>
+                <li>Reuse letters from previous guesses</li>
+                <li>Green and yellow letters are your "carry-on" - use them freely</li>
+              </ul>
+              
+              <h3>Resources</h3>
+              <ul>
+                <li>6 guesses to reach your destination</li>
+                <li>3 resets available if you get stuck</li>
+                <li>5 hints to help guide your journey</li>
+              </ul>
+              
+              <h3>Color Guide</h3>
+              <ul>
+                <li><strong>Green:</strong> Letter is in the correct position</li>
+                <li><strong>Yellow:</strong> Letter is in the word but wrong position</li>
+                <li><strong>Gray:</strong> Letter is not in the target word</li>
+              </ul>
+              
+              <p><em>Thank you for flying Departure Air!</em></p>
+            </div>
           </div>
-          <div className="sidebar-content">
-            <p>Find the mystery destination starting from PARIS</p>
-            <p>Each guess must be a real word (3-10 letters)</p>
-            <p>You can only add 2 new letters per guess - reuse letters from previous guesses</p>
-            <p>Green and yellow letters are your "carry-on" - use them again</p>
-            <p>6 guesses to reach your destination</p>
-            <p>3 resets available if you get stuck</p>
-            <p>Use hints when you need help</p>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
       
       {showRules && (
         <div className="rules-modal-overlay" onClick={() => setShowRules(false)}>

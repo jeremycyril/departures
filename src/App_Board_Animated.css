@@ -21,14 +21,18 @@ html {
 .game-container {
   max-width: 900px;
   margin: auto;
-  padding: 2rem;
+  padding: 1.5rem;
   background: #1b1b1b;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-  margin-top: 2rem;
   flex: 1;
   min-width: 0;
   width: 100%;
+  height: fit-content;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 768px) {
@@ -47,9 +51,10 @@ html {
 
 header {
   border-bottom: 2px dashed #555;
-  margin-bottom: 1em;
-  padding-bottom: 1em;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
   color: #ccc;
+  flex-shrink: 0;
 }
 
 header h1 {
@@ -119,13 +124,15 @@ header h1 {
 
 .departure-board {
   display: block;
-  margin-top: 1em;
-  font-size: 1em;
+  margin-top: 1rem;
+  font-size: 1rem;
   overflow-x: auto;
   background: #0f0f0f;
-  padding: 1em;
+  padding: 1rem;
   border-radius: 8px;
   min-width: fit-content;
+  flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
@@ -390,15 +397,17 @@ header h1 {
   display: flex;
   justify-content: center;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 1rem;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 /* Hint Button Container */
 .hint-button-container {
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
+  margin-top: 0.8rem;
+  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
@@ -482,8 +491,8 @@ header h1 {
 }
 
 .status-msg {
-  font-size: 1em;
-  margin-top: 1em;
+  font-size: 1rem;
+  margin-top: 1rem;
   color: #ccc;
   white-space: pre-line;
   line-height: 1.4;
@@ -494,6 +503,7 @@ header h1 {
   text-align: center;
   font-family: 'Share Tech Mono', monospace;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  flex-shrink: 0;
 }
 
 .main-flex {
@@ -504,22 +514,108 @@ header h1 {
   padding: 1rem;
   max-width: 1400px;
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* How to Play Sidebar */
+/* How to Play Sidebar - Hidden by default, shown as popup */
 .sidebar-container {
-  flex-shrink: 0;
-  width: 300px;
+  display: none;
 }
 
 .how-to-play-sidebar {
-  background: #0f0f0f;
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  display: none;
+}
+
+/* NYT-style Instructions Popup */
+.instructions-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 1rem;
-  position: sticky;
-  top: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+  font-family: 'Georgia', serif;
+}
+
+.instructions-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.instructions-header {
+  padding: 1.5rem 2rem 1rem 2rem;
+  border-bottom: 1px solid #eee;
+  position: relative;
+}
+
+.instructions-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+
+.instructions-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.instructions-close:hover {
+  color: #333;
+}
+
+.instructions-content {
+  padding: 1.5rem 2rem 2rem 2rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+.instructions-content h3 {
+  margin: 1.5rem 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.instructions-content h3:first-child {
+  margin-top: 0;
+}
+
+.instructions-content p {
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+}
+
+.instructions-content ul {
+  margin: 0 0 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.instructions-content li {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
 }
 
 .sidebar-header {
@@ -561,26 +657,34 @@ header h1 {
 @media (max-width: 768px) {
   .main-flex {
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
     padding: 0.5rem;
-  }
-  
-  .sidebar-container {
-    width: 100%;
-    order: 2;
+    height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height when available */
   }
   
   .game-container {
-    order: 1;
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    padding: 1rem;
   }
   
-  .how-to-play-sidebar {
-    position: static;
-    margin-top: 1rem;
+  .instructions-popup {
+    max-width: 95vw;
+    max-height: 85vh;
+    max-height: 85dvh;
   }
   
-  .sidebar-content {
-    font-size: 0.8rem;
+  .instructions-content {
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+  }
+  
+  .instructions-header {
+    padding: 1rem 1.5rem 0.5rem 1.5rem;
+  }
+  
+  .instructions-title {
+    font-size: 1.3rem;
   }
 }
 
@@ -802,14 +906,15 @@ header h1 {
   
   .board-row {
     gap: 0;
-    padding: 0.4rem 0.5rem;
-    margin-bottom: 0.5rem;
+    padding: 0.3rem 0.4rem;
+    margin-bottom: 0.4rem;
   }
   
   .board-header {
     gap: 1rem;
-    padding: 0.5rem;
+    padding: 0.4rem;
     font-size: 0.8rem;
+    margin-bottom: 0.5rem;
   }
   
   .header-column {
@@ -821,46 +926,67 @@ header h1 {
   }
   
   .letter-tile {
-    padding: 0.2rem 0.25rem;
-    font-size: 0.7rem;
-    min-width: 14px;
-    min-height: 22px;
+    padding: 0.15rem 0.2rem;
+    font-size: 0.65rem;
+    min-width: 12px;
+    min-height: 20px;
   }
   
   .departure-board {
     padding: 0.5rem;
     font-size: 0.9rem;
+    margin-top: 0.5rem;
   }
   
   .blank-solari-row {
     gap: 0.03rem;
-    margin: 0.5rem 0;
-    padding: 0.3rem;
+    margin: 0.3rem 0;
+    padding: 0.2rem;
+    min-height: 35px;
   }
   
   .hint-button.boarding-pass {
-    min-width: 120px;
-    min-height: 50px;
-    padding: 0.6rem 1rem;
+    min-width: 110px;
+    min-height: 45px;
+    padding: 0.5rem 0.8rem;
   }
   
   .boarding-pass-icon {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   
   .boarding-pass-text {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
   }
   
   .hint-lights {
-    gap: 0.15rem;
+    gap: 0.1rem;
   }
   
   .hint-light {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
-}
+  
+  header {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .input-zone {
+    margin-top: 0.5rem;
+  }
+  
+  .hint-button-container {
+    margin-top: 0.5rem;
+  }
+  
+  .status-msg {
+    margin-top: 0.5rem;
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+}"
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
