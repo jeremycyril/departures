@@ -24,6 +24,28 @@ const generateGibberish = (length) => {
   return word;
 };
 
+const getLocalTime = (destination) => {
+  // Get current time in destination's timezone
+  const timeZones = {
+    'PROVO': 'America/Denver', // Mountain Time
+    'PARIS': 'Europe/Paris',
+    // Add more destinations as needed
+  };
+  
+  const timeZone = timeZones[destination] || 'America/Denver';
+  const now = new Date();
+  
+  return now.toLocaleString('en-US', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 export default function NameChainGame() {
   const [dictionary, setDictionary] = useState(new Set());
   const [guesses, setGuesses] = useState([START]);
@@ -124,11 +146,12 @@ export default function NameChainGame() {
     setInput("");
 
     if (next === END) {
-      setStatus("🎉 You found the mystery place: " + END);
+      const localTime = getLocalTime(END);
+      setStatus(`ARRIVED AT ${END}\nLOCAL TIME: ${localTime}\n\nOn behalf of the captain and crew, we want to thank you for flying Departure Air. We hope to see you again soon.`);
       setGameOver(true);
     } else if (newGuesses.length - 1 >= MAX_GUESSES || resets >= MAX_RESETS) {
       setGameOver(true);
-      setStatus(`Out of guesses or resets! The mystery place was: ${END}`);
+      setStatus(`FLIGHT TERMINATED\nThe mystery destination was: ${END}\n\nThank you for flying Departure Air.`);
     } else {
       setStatus(feedback);
     }
