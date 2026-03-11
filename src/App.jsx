@@ -225,7 +225,7 @@ export default function NameChainGame() {
         <div
           key={i}
           className={`solari-tile ${cls}`}
-          style={animated ? { animationDelay: `${i * 0.08}s` } : {}}
+          style={animated ? { animationDelay: `${i * 0.12}s` } : {}}
         >
           <div className="solari-flap">
             <div className="flap-top">{char}</div>
