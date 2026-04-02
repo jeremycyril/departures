@@ -1,26 +1,26 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import "./App.css";
+// App.jsx — Departures: variable-length with dual feedback
+import { useState, useEffect } from "react";
+import { getDailyPuzzle } from "./puzzles";
+import "./App_Board_Animated.css";
 
-const START = "PARIS";
-const END = "PROVO";
+const PUZZLE = getDailyPuzzle();
+const START = PUZZLE.start;
+const END = PUZZLE.end;
+const CLUES = PUZZLE.clues;
 const MAX_RESETS = 3;
 const MAX_GUESSES = 6;
-const WORD_LENGTH = 5;
 
-const CLUES = [
-  "City ranked among the most conservative in the U.S.",
-  "Nicknamed 'The Garden City'",
-  "Home to large faith-based university",
-  "Fourth-largest city in Utah",
-  "South of Salt Lake City, on Utah Lake",
-];
+const generateGibberish = (length) => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let word = "";
+  for (let i = 0; i < length; i++) {
+    word += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return word;
+};
 
-const getLocalTime = (destination) => {
-  const timeZones = {
-    PROVO: "America/Denver",
-    PARIS: "Europe/Paris",
-  };
-  const timeZone = timeZones[destination] || "America/Denver";
+const getLocalTime = () => {
+  const timeZone = PUZZLE.timezone || "UTC";
   const now = new Date();
   return now.toLocaleString("en-US", {
     timeZone,
@@ -44,31 +44,27 @@ export default function NameChainGame() {
   const [clueIndex, setClueIndex] = useState(0);
   const [showRules, setShowRules] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(true);
+  const [showHintDisplay, setShowHintDisplay] = useState(false);
+  const [showRulesHover, setShowRulesHover] = useState(false);
+  const [currentHint, setCurrentHint] = useState("");
   const [hintsUsed, setHintsUsed] = useState(0);
-  const [revealedClues, setRevealedClues] = useState([]);
-  const inputRef = useRef(null);
+  const [lengthMatched, setLengthMatched] = useState(false);
+  const [showLengthAlert, setShowLengthAlert] = useState(false);
   const MAX_HINTS = 5;
+
+  // Store feedback per guess for rendering
+  const [guessFeedback, setGuessFeedback] = useState([]);
 
   useEffect(() => {
     fetch("/words.txt")
       .then((res) => res.text())
       .then((text) => {
         const words = new Set(
-          text
-            .toUpperCase()
-            .split("\n")
-            .map((word) => word.trim())
+          text.toUpperCase().split("\n").map((word) => word.trim())
         );
         setDictionary(words);
       });
   }, []);
-
-  // Focus the hidden input on mount and whenever game state changes
-  useEffect(() => {
-    if (!gameOver && !showRules && !showQuickStart) {
-      inputRef.current?.focus();
-    }
-  }, [gameOver, showRules, showQuickStart, guesses]);
 
   const countNewLettersUsed = (a, b, unlocked) => {
     const aChars = new Set(a);
@@ -82,500 +78,466 @@ export default function NameChainGame() {
     return count;
   };
 
-  const getDistance = (a, b) => {
-    const aChars = a.split("").sort().join("");
-    const bChars = b.split("").sort().join("");
-    let distance = Math.abs(a.length - b.length);
-    const minLength = Math.min(a.length, b.length);
-    for (let i = 0; i < minLength; i++) {
-      if (aChars[i] !== bChars[i]) {
-        distance++;
-      }
-    }
-    return distance;
-  };
-
-  const getLetterFeedback = (guess, answer) => {
-    return guess.split("").map((char, i) => {
-      if (char === answer[i]) return "correct";
-      else if (answer.includes(char)) return "present";
-      else return "absent";
+  // Letter-presence feedback (for wrong-length guesses)
+  const getPresenceFeedback = (guess, answer) => {
+    const answerChars = new Set(answer);
+    return guess.split("").map((char) => {
+      return answerChars.has(char) ? "present" : "absent";
     });
   };
 
-  const handleSubmit = useCallback(() => {
+  // Positional feedback (for right-length guesses) — standard Wordle logic
+  const getPositionalFeedback = (guess, answer) => {
+    const result = Array(guess.length).fill("gray");
+    const answerArr = answer.split("");
+    const guessArr = guess.split("");
+    const used = Array(answer.length).fill(false);
+
+    // Green pass
+    for (let i = 0; i < guessArr.length; i++) {
+      if (guessArr[i] === answerArr[i]) {
+        result[i] = "green";
+        used[i] = true;
+      }
+    }
+
+    // Yellow pass
+    for (let i = 0; i < guessArr.length; i++) {
+      if (result[i] === "green") continue;
+      for (let j = 0; j < answerArr.length; j++) {
+        if (!used[j] && guessArr[i] === answerArr[j]) {
+          result[i] = "yellow";
+          used[j] = true;
+          break;
+        }
+      }
+    }
+
+    return result;
+  };
+
+  // Determine feedback type based on length match
+  const getFeedback = (guess, answer) => {
+    if (guess.length === answer.length) {
+      return {
+        type: "positional",
+        colors: getPositionalFeedback(guess, answer),
+      };
+    } else {
+      return {
+        type: "presence",
+        colors: getPresenceFeedback(guess, answer),
+      };
+    }
+  };
+
+  const handleSubmit = () => {
     const current = guesses[guesses.length - 1];
     const next = input.toUpperCase();
 
     if (next.length < 3 || next.length > 10) {
-      setStatus("Word must be 3–10 letters");
+      setStatus("Word must be 3-10 letters long");
       return;
     }
     if (!dictionary.has(next)) {
-      setStatus("Not in word list");
+      setStatus("Not in dictionary");
       return;
     }
     if (countNewLettersUsed(current, next, unlockedLetters) > 2) {
-      setStatus("Max 2 new letters per guess");
+      setStatus("Too many new letters! Only 2 new letters allowed per guess");
       return;
     }
 
+    const feedback = getFeedback(next, END);
     const newGuesses = [...guesses, next];
-    const previousDistance = getDistance(current, END);
-    const newDistance = getDistance(next, END);
+    const newFeedback = [...guessFeedback, feedback];
 
-    let feedback = "";
-    if (newDistance < previousDistance) feedback = "Getting closer";
-    else if (newDistance > previousDistance) feedback = "Getting farther";
-    else feedback = "Same distance";
-
-    const feedbackColors = getLetterFeedback(next, END);
+    // Update carry-on letters
     const newUnlocked = new Set(unlockedLetters);
     next.split("").forEach((char, i) => {
-      if (
-        feedbackColors[i] === "correct" ||
-        feedbackColors[i] === "present"
-      ) {
-        newUnlocked.add(char);
+      if (feedback.type === "positional") {
+        if (feedback.colors[i] === "green" || feedback.colors[i] === "yellow") {
+          newUnlocked.add(char);
+        }
+      } else {
+        if (feedback.colors[i] === "present") {
+          newUnlocked.add(char);
+        }
       }
     });
 
     setUnlockedLetters(newUnlocked);
     setGuesses(newGuesses);
+    setGuessFeedback(newFeedback);
     setInput("");
+
+    // Check for length match — notify once
+    if (next.length === END.length && !lengthMatched) {
+      setLengthMatched(true);
+      setShowLengthAlert(true);
+      setTimeout(() => setShowLengthAlert(false), 4000);
+    }
+
     if (next === END) {
-      const localTime = getLocalTime(END);
+      const localTime = getLocalTime();
       setStatus(
-        `ARRIVED — ${END}\nLocal time: ${localTime}\n\nThank you for flying Departures.`
+        `ARRIVED AT ${END}\nLOCAL TIME: ${localTime}\n\nOn behalf of the captain and crew, we want to thank you for flying Departures Air. We hope to see you again soon.`
       );
       setGameOver(true);
     } else if (newGuesses.length - 1 >= MAX_GUESSES) {
       setGameOver(true);
       setStatus(
-        `FLIGHT CANCELLED\nDestination was ${END}\n\nThank you for flying Departures.`
+        `FLIGHT TERMINATED\nThe mystery destination was: ${END}\n\nThank you for flying Departures Air.`
       );
     } else {
-      setStatus(feedback);
+      if (feedback.type === "positional") {
+        setStatus("\u2708\uFE0F LENGTH LOCKED \u2014 positional feedback active");
+      } else {
+        const presentCount = feedback.colors.filter((c) => c === "present").length;
+        setStatus(
+          `${presentCount} of ${next.length} letters are in the destination`
+        );
+      }
     }
-  }, [input, guesses, dictionary, unlockedLetters]);
+  };
 
   const handleReset = () => {
     if (resets < MAX_RESETS) {
       setGuesses([START]);
+      setGuessFeedback([]);
       setResets(resets + 1);
       setUnlockedLetters(new Set());
       setClueIndex(0);
-      setRevealedClues([]);
+      setLengthMatched(false);
+      setShowLengthAlert(false);
       setStatus("");
-
+    } else {
+      setStatus("No resets remaining");
     }
   };
 
   const revealNextClue = () => {
     if (clueIndex < CLUES.length && hintsUsed < MAX_HINTS) {
-      setRevealedClues((prev) => [...prev, CLUES[clueIndex]]);
+      setCurrentHint(CLUES[clueIndex]);
       setClueIndex(clueIndex + 1);
       setHintsUsed(hintsUsed + 1);
+      setShowHintDisplay(true);
+      setTimeout(() => setShowHintDisplay(false), 8000);
     }
   };
 
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (gameOver || showRules || showQuickStart) return;
+  // Render a single guess row with variable-width tiles
+  const renderGuessRow = (guess, feedback, rowIndex, isStart) => {
+    const word = guess.toUpperCase();
+    const tiles = word.split("").map((char, i) => {
+      let tileClass = "letter-tile flip";
 
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSubmit();
-      } else if (e.key === "Backspace") {
-        e.preventDefault();
-        setInput((prev) => prev.slice(0, -1));
-      } else if (/^[a-zA-Z]$/.test(e.key) && input.length < 10) {
-        e.preventDefault();
-        setInput((prev) => prev + e.key.toUpperCase());
+      if (isStart) {
+        tileClass += " start-tile";
+      } else if (feedback) {
+        tileClass += ` ${feedback.colors[i]}`;
       }
-    },
-    [gameOver, showRules, showQuickStart, input, handleSubmit]
-  );
 
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
-
-  // Click anywhere on the board area to focus
-  const handleBoardClick = () => {
-    if (!gameOver) {
-      inputRef.current?.focus();
-    }
-  };
-
-  // Render a row of Solari tiles for a word
-  const renderWord = (word, feedback = null, animated = false) => {
-    const padded = word.padEnd(WORD_LENGTH, " ");
-    return padded.split("").map((char, i) => {
-      const fb = feedback ? feedback[i] : "";
-      const cls = [
-        fb,
-        animated ? "flip-in" : "",
-        char === " " ? "empty" : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
       return (
         <div
-          key={i}
-          className={`solari-tile ${cls}`}
-          style={animated ? { animationDelay: `${i * 0.12}s` } : {}}
+          key={`${rowIndex}-tile-${i}`}
+          className={tileClass}
+          style={{ animationDelay: `${i * 0.05}s` }}
         >
-          <div className="solari-flap">
-            <div className="flap-top">{char}</div>
-            <div className="flap-bottom">{char}</div>
-          </div>
+          {char}
         </div>
       );
     });
-  };
 
-  // Render the input row as Solari tiles
-  const renderInputRow = () => {
-    const chars = input.split("");
-    const tiles = [];
-    for (let i = 0; i < WORD_LENGTH; i++) {
-      const char = chars[i] || "";
-      const isActive = i === chars.length;
-      const isFilled = i < chars.length;
-      tiles.push(
-        <div
-          key={i}
-          className={`solari-tile input-tile ${isActive ? "cursor" : ""} ${isFilled ? "filled" : "empty"}`}
-        >
-          <div className="solari-flap">
-            <div className="flap-top">{char}</div>
-            <div className="flap-bottom">{char}</div>
-          </div>
-        </div>
-      );
+    // Feedback type indicator
+    let feedbackLabel = "";
+    if (isStart) {
+      feedbackLabel = "ORIGIN";
+    } else if (feedback) {
+      feedbackLabel = feedback.type === "positional" ? "LOCKED" : "SCAN";
     }
-    return tiles;
+
+    return (
+      <div key={rowIndex} className="board-row variable-row">
+        <div className="row-tiles">
+          {tiles}
+        </div>
+        <div className="row-info">
+          <span className={`feedback-type ${isStart ? "start" : feedback?.type || ""}`}>
+            {feedbackLabel}
+          </span>
+        </div>
+      </div>
+    );
   };
 
-  const guessCount = guesses.length - 1; // subtract START
-  const won = gameOver && guesses[guesses.length - 1] === END;
+  // Render empty future rows
+  const renderEmptyRow = (rowIndex) => {
+    const gibberishLen = 4 + Math.floor(Math.random() * 4);
+    const gibberish = generateGibberish(gibberishLen);
+
+    return (
+      <div key={`empty-${rowIndex}`} className="board-row variable-row empty-row">
+        <div className="row-tiles">
+          {gibberish.split("").map((char, i) => (
+            <div
+              key={`${rowIndex}-empty-${i}`}
+              className="letter-tile flip empty-tile"
+              style={{ animationDelay: `${i * 0.05}s` }}
+            >
+              {char}
+            </div>
+          ))}
+        </div>
+        <div className="row-info">
+          <span className="feedback-type empty">READY</span>
+        </div>
+      </div>
+    );
+  };
+
+  const guessCount = guesses.length - 1;
+  const remainingRows = MAX_GUESSES - guessCount;
 
   return (
-    <div className="departures-app" onClick={handleBoardClick}>
-      {/* Hidden input for mobile keyboard */}
-      <input
-        ref={inputRef}
-        className="hidden-input"
-        value={input}
-        onChange={(e) => {
-          const val = e.target.value
-            .toUpperCase()
-            .replace(/[^A-Z]/g, "")
-            .slice(0, 10);
-          setInput(val);
-        }}
-        autoCapitalize="characters"
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck="false"
-      />
-
-      <header className="board-header">
-        <div className="header-left">
-          <h1 className="title">DEPARTURES</h1>
-        </div>
-        <div className="header-right">
-          <button
-            className="header-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowRules(true);
-            }}
-          >
-            ?
-          </button>
-        </div>
-      </header>
-
-      <div className="board-chrome">
-        {/* Route info bar */}
-        <div className="route-bar">
-          <div className="route-segment">
-            <span className="route-label">FROM</span>
-            <span className="route-city">{START}</span>
-          </div>
-          <div className="route-arrow">→</div>
-          <div className="route-segment">
-            <span className="route-label">TO</span>
-            <span className="route-city">?????</span>
-          </div>
-          <div className="route-meta">
-            <span className="meta-item">
-              GUESSES {guessCount}/{MAX_GUESSES}
-            </span>
-            <span className="meta-item">
-              REBOOKS {MAX_RESETS - resets}
-            </span>
-          </div>
-        </div>
-
-        {/* The board */}
-        <div className="solari-board">
-          {/* Header row */}
-          <div className="solari-row header-row">
-            <div className="row-label header-label">#</div>
-            <div className="row-tiles header-tiles">
-              {"WORD".padEnd(WORD_LENGTH, " ").split("").map((c, i) => (
-                <div key={i} className="solari-tile header-tile">
-                  <div className="solari-flap">
-                    <div className="flap-top">{c}</div>
-                    <div className="flap-bottom">{c}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="row-status header-status">STATUS</div>
-          </div>
-
-          {/* Guess rows */}
-          {Array.from({ length: MAX_GUESSES }, (_, i) => {
-            const guessIndex = i + 1; // +1 because guesses[0] is START
-            const guess = guesses[guessIndex];
-            const isCurrentInput = guessIndex === guesses.length && !gameOver;
-            const isFuture = guessIndex > guesses.length;
-            const isPast = guessIndex < guesses.length;
-
-            let feedback = null;
-            let statusText = "";
-            let statusClass = "";
-
-            if (isPast && guess) {
-              feedback = getLetterFeedback(guess, END);
-              const dist = getDistance(guess, END);
-              const prevDist = getDistance(
-                guesses[guessIndex - 1],
-                END
-              );
-              if (guess === END) {
-                statusText = "ARRIVED";
-                statusClass = "status-arrived";
-              } else if (dist < prevDist) {
-                statusText = "CLOSER";
-                statusClass = "status-closer";
-              } else if (dist > prevDist) {
-                statusText = "FARTHER";
-                statusClass = "status-farther";
-              } else {
-                statusText = "SAME";
-                statusClass = "status-same";
-              }
-            } else if (isCurrentInput) {
-              statusText = "BOARDING";
-              statusClass = "status-boarding";
-            } else if (isFuture) {
-              statusText = "—";
-              statusClass = "status-empty";
-            } else if (gameOver && !guess) {
-              statusText = "—";
-              statusClass = "status-empty";
-            }
-
-            return (
-              <div
-                key={i}
-                className={`solari-row ${isCurrentInput ? "active-row" : ""} ${isPast ? "past-row" : ""} ${isFuture ? "future-row" : ""}`}
-              >
-                <div className="row-label">{i + 1}</div>
-                <div className="row-tiles">
-                  {isCurrentInput
-                    ? renderInputRow()
-                    : isPast && guess
-                      ? renderWord(guess, feedback, true)
-                      : renderWord("     ")}
-                </div>
-                <div className={`row-status ${statusClass}`}>
-                  {statusText}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Start word shown at bottom as reference */}
-          <div className="solari-row start-row">
-            <div className="row-label">⌂</div>
-            <div className="row-tiles">
-              {renderWord(START)}
-            </div>
-            <div className="row-status status-origin">ORIGIN</div>
-          </div>
-        </div>
-
-        {/* Controls */}
-        {!gameOver && (
-          <div className="controls">
-            <button className="ctrl-btn submit-btn" onClick={handleSubmit}>
-              BOARD ↵
-            </button>
+    <div className="main-flex">
+      <div className="game-container">
+        <header>
+          <div className="header-title-row">
+            <h1>\uD83D\uDEC4 DEPARTURES</h1>
             <button
-              className="ctrl-btn rebook-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleReset();
-              }}
-              disabled={resets >= MAX_RESETS}
+              className="help-icon"
+              onMouseEnter={() => setShowRulesHover(true)}
+              onMouseLeave={() => setShowRulesHover(false)}
+              onClick={() => setShowRules(true)}
             >
-              REBOOK
+              \u2139\uFE0F
             </button>
+            {showRulesHover && (
+              <div className="help-hover">
+                <h3>How to Play</h3>
+                <p>Click for instructions</p>
+              </div>
+            )}
+          </div>
+          <p className="subhead">
+            Rebooks: {MAX_RESETS - resets} &nbsp;|&nbsp; Guesses: {guessCount}/{MAX_GUESSES}
+          </p>
+        </header>
+
+        {/* Carry-on display */}
+        <div className="carryon-bar">
+          <span className="carryon-label">CARRY ON:</span>
+          <span className="carryon-letters">
+            {unlockedLetters.size > 0
+              ? [...unlockedLetters].join("  ")
+              : "\u2014"}
+          </span>
+        </div>
+
+        {/* Length match alert */}
+        {showLengthAlert && (
+          <div className="length-alert">
+            \u2708\uFE0F LENGTH MATCHED \u2014 Positional feedback now active!
+          </div>
+        )}
+
+        {/* Departure board */}
+        <div className="departure-board">
+          <div className="board-header-v2">
+            <span className="header-col-guess">FLIGHT PATH</span>
+            <span className="header-col-status">MODE</span>
+          </div>
+
+          {/* Start word */}
+          {renderGuessRow(START, null, 0, true)}
+
+          {/* Player guesses */}
+          {guesses.slice(1).map((guess, i) =>
+            renderGuessRow(guess, guessFeedback[i], i + 1, false)
+          )}
+
+          {/* Empty future rows */}
+          {!gameOver &&
+            Array.from({ length: remainingRows }, (_, i) =>
+              renderEmptyRow(guesses.length + i)
+            )}
+        </div>
+
+        {/* Input */}
+        {!gameOver && (
+          <div className="input-zone">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              placeholder="Enter next stop..."
+              className="input-box"
+              autoFocus
+            />
+            <button className="btn submit" onClick={handleSubmit}>
+              Board
+            </button>
+            <button className="btn reset" onClick={handleReset}>
+              Rebook
+            </button>
+          </div>
+        )}
+
+        {/* Hint button */}
+        {!gameOver && (
+          <div className="hint-button-container">
             <button
-              className="ctrl-btn hint-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                revealNextClue();
-              }}
+              className="hint-button boarding-pass"
+              onClick={revealNextClue}
               disabled={hintsUsed >= MAX_HINTS || clueIndex >= CLUES.length}
             >
-              HINT {hintsUsed}/{MAX_HINTS}
+              <div className="boarding-pass-content">
+                <div className="boarding-pass-icon">\uD83C\uDFAB</div>
+                <div className="boarding-pass-text">HINT</div>
+                <div className="hint-lights">
+                  {Array.from({ length: MAX_HINTS }, (_, i) => (
+                    <div
+                      key={i}
+                      className={`hint-light ${i < hintsUsed ? "used" : "available"}`}
+                    />
+                  ))}
+                </div>
+              </div>
             </button>
           </div>
         )}
 
-        {/* Carry-on letters */}
-        {unlockedLetters.size > 0 && !gameOver && (
-          <div className="carry-on">
-            <span className="carry-on-label">CARRY-ON LETTERS</span>
-            <div className="carry-on-letters">
-              {[...unlockedLetters].map((letter) => (
-                <span key={letter} className="carry-on-letter">
-                  {letter}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Status message */}
-        {status && (
-          <div className={`status-display ${won ? "won" : ""}`}>
-            {status}
-          </div>
-        )}
-
-        {/* Revealed hints */}
-        {revealedClues.length > 0 && (
-          <div className="clues-panel">
-            <div className="clues-header">FLIGHT INTEL</div>
-            {revealedClues.map((clue, i) => (
-              <div key={i} className="clue-item">
-                <span className="clue-number">{i + 1}.</span> {clue}
-              </div>
-            ))}
-          </div>
-        )}
+        {status && <p className="status-msg">{status}</p>}
       </div>
+
+      {/* Right side hint panel */}
+      {!gameOver && (
+        <div className="hint-panel">
+          <button
+            className="hint-button boarding-pass"
+            onClick={() => {
+              revealNextClue();
+              setShowHintDisplay(true);
+            }}
+            disabled={hintsUsed >= MAX_HINTS || clueIndex >= CLUES.length}
+          >
+            <div className="boarding-pass-content">
+              <div className="boarding-pass-icon">\uD83C\uDFAB</div>
+              <div className="boarding-pass-text">HINT</div>
+              <div className="hint-lights">
+                {Array.from({ length: MAX_HINTS }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`hint-light ${i < hintsUsed ? "used" : "available"}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </button>
+
+          {showHintDisplay && currentHint && (
+            <div className="hint-display-panel">
+              <div className="hint-display-header">\u2708\uFE0F FLIGHT HINT</div>
+              <div className="hint-display-content">{currentHint}</div>
+              <button
+                className="hint-display-close"
+                onClick={() => setShowHintDisplay(false)}
+              >
+                \u00D7
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Start Modal */}
       {showQuickStart && (
         <div
-          className="modal-overlay"
+          className="rules-modal-overlay"
           onClick={() => setShowQuickStart(false)}
         >
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="rules-modal" onClick={(e) => e.stopPropagation()}>
             <button
-              className="modal-close"
+              className="close-button"
               onClick={() => setShowQuickStart(false)}
             >
-              ×
+              \u00D7
             </button>
-            <h2>DEPARTURES</h2>
-            <p className="modal-subtitle">
-              Find the mystery destination from <strong>{START}</strong>{" "}
-              in {MAX_GUESSES} guesses.
-            </p>
-            <div className="modal-rules">
-              <div className="rule">
-                <span className="rule-icon">✈</span>
-                Each guess must be a real word (3–10 letters)
-              </div>
-              <div className="rule">
-                <span className="rule-icon">🧳</span>
-                Only 2 new letters per guess — reuse from previous words
-              </div>
-              <div className="rule">
-                <span className="rule-icon tile-demo correct">A</span>
-                Correct letter, correct position
-              </div>
-              <div className="rule">
-                <span className="rule-icon tile-demo present">A</span>
-                Correct letter, wrong position
-              </div>
-              <div className="rule">
-                <span className="rule-icon tile-demo absent">A</span>
-                Letter not in destination
-              </div>
-            </div>
-            <p className="modal-cta">Click anywhere to begin</p>
+            <aside className="rules-box">
+              <h2>Welcome to DEPARTURES</h2>
+              <p>
+                <strong>
+                  Find the mystery destination starting from {START} in {MAX_GUESSES} guesses!
+                </strong>
+              </p>
+              <ul>
+                <li>Each guess must be a real word (3-10 letters)</li>
+                <li>Only 2 new letters per guess \u2014 reuse previous letters</li>
+                <li>You don't know the destination's length</li>
+                <li>
+                  Wrong length \u2192 you learn which letters are <em>in</em> the destination
+                </li>
+                <li>
+                  Right length \u2192 full positional feedback: \uD83D\uDFE2 correct spot, \uD83D\uDFE1 wrong spot
+                </li>
+                <li>3 rebooks and 5 hints available</li>
+              </ul>
+              <p>
+                <em>Click anywhere to start your journey!</em>
+              </p>
+            </aside>
           </div>
         </div>
       )}
 
-      {/* Rules Modal */}
+      {/* Full Rules Modal */}
       {showRules && (
         <div
-          className="modal-overlay"
+          className="rules-modal-overlay"
           onClick={() => setShowRules(false)}
         >
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="rules-modal" onClick={(e) => e.stopPropagation()}>
             <button
-              className="modal-close"
+              className="close-button"
               onClick={() => setShowRules(false)}
             >
-              ×
+              \u00D7
             </button>
-            <h2>Flight Plan</h2>
-            <p>
-              Find the mystery destination starting from{" "}
-              <strong>{START}</strong>.
-            </p>
+            <aside className="rules-box">
+              <h2>Flight Plan</h2>
+              <p>
+                Welcome aboard your journey from {START} to your mystery destination.
+              </p>
 
-            <h3>Rules</h3>
-            <ul>
-              <li>Each guess must be a real word (3–10 letters)</li>
-              <li>
-                Only 2 new letters per guess — all others must come from
-                previous words
-              </li>
-              <li>
-                You have {MAX_GUESSES} guesses to reach your destination
-              </li>
-            </ul>
+              <h3>Pre-Flight Instructions</h3>
+              <ul>
+                <li>Each guess must be a real word (3-10 letters) to clear for takeoff</li>
+                <li>You may board with only 2 new letters per flight \u2014 all other letters must come from your carry-on</li>
+                <li>There are {MAX_GUESSES} flights available to reach your final destination</li>
+                <li>You do not know how long the destination name is \u2014 figuring that out is part of the puzzle</li>
+              </ul>
 
-            <h3>Signals</h3>
-            <ul>
-              <li>
-                <span className="tile-demo correct inline">A</span>{" "}
-                Correct position
-              </li>
-              <li>
-                <span className="tile-demo present inline">A</span>{" "}
-                Wrong position
-              </li>
-              <li>
-                <span className="tile-demo absent inline">A</span> Not
-                in destination
-              </li>
-            </ul>
+              <h3>In-Flight Signals</h3>
+              <ul>
+                <li><strong>SCAN mode</strong> (wrong length): You learn which of your letters appear in the destination</li>
+                <li><strong>LOCKED mode</strong> (right length): Full positional feedback activates</li>
+                <li>\uD83D\uDFE2 Letter secured in correct position</li>
+                <li>\uD83D\uDFE1 Letter in transit (right letter, wrong position)</li>
+                <li>\u2B1C Letter left at departure gate (not in destination)</li>
+                <li>\uD83D\uDD35 Letter is in the destination (SCAN mode)</li>
+                <li>\u2B1B Letter is not in the destination (SCAN mode)</li>
+              </ul>
 
-            <h3>Help</h3>
-            <ul>
-              <li>{MAX_RESETS} rebooks to restart from {START}</li>
-              <li>{MAX_HINTS} hints available for clues about the destination</li>
-              <li>
-                Letters in green or yellow are your carry-on — free to
-                reuse
-              </li>
-            </ul>
+              <h3>In-Flight Services</h3>
+              <ul>
+                <li>{MAX_RESETS} rebooks available for unexpected turbulence</li>
+                <li>5 complimentary hints available with your call button</li>
+              </ul>
+
+              <p>Letters confirmed present (via either mode) are added to your carry-on \u2014 reuse them freely.</p>
+              <p><em>Thank You for flying Departures Air</em></p>
+            </aside>
           </div>
         </div>
       )}
