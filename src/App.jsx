@@ -191,7 +191,7 @@ export default function NameChainGame() {
       );
     } else {
       if (feedback.type === "positional") {
-        setStatus("\u2708\uFE0F LENGTH LOCKED \u2014 positional feedback active");
+        setStatus("✈️ LENGTH LOCKED — positional feedback active");
       } else {
         const presentCount = feedback.colors.filter((c) => c === "present").length;
         setStatus(
@@ -304,14 +304,14 @@ export default function NameChainGame() {
       <div className="game-container">
         <header>
           <div className="header-title-row">
-            <h1>\uD83D\uDEC4 DEPARTURES</h1>
+            <h1>🛄 DEPARTURES</h1>
             <button
               className="help-icon"
               onMouseEnter={() => setShowRulesHover(true)}
               onMouseLeave={() => setShowRulesHover(false)}
               onClick={() => setShowRules(true)}
             >
-              \u2139\uFE0F
+              ℹ️
             </button>
             {showRulesHover && (
               <div className="help-hover">
@@ -331,14 +331,14 @@ export default function NameChainGame() {
           <span className="carryon-letters">
             {unlockedLetters.size > 0
               ? [...unlockedLetters].join("  ")
-              : "\u2014"}
+              : "—"}
           </span>
         </div>
 
         {/* Length match alert */}
         {showLengthAlert && (
           <div className="length-alert">
-            \u2708\uFE0F LENGTH MATCHED \u2014 Positional feedback now active!
+            ✈️ LENGTH MATCHED — Positional feedback now active!
           </div>
         )}
 
@@ -393,7 +393,7 @@ export default function NameChainGame() {
               disabled={hintsUsed >= MAX_HINTS || clueIndex >= CLUES.length}
             >
               <div className="boarding-pass-content">
-                <div className="boarding-pass-icon">\uD83C\uDFAB</div>
+                <div className="boarding-pass-icon">🎫</div>
                 <div className="boarding-pass-text">HINT</div>
                 <div className="hint-lights">
                   {Array.from({ length: MAX_HINTS }, (_, i) => (
@@ -423,7 +423,7 @@ export default function NameChainGame() {
             disabled={hintsUsed >= MAX_HINTS || clueIndex >= CLUES.length}
           >
             <div className="boarding-pass-content">
-              <div className="boarding-pass-icon">\uD83C\uDFAB</div>
+              <div className="boarding-pass-icon">🎫</div>
               <div className="boarding-pass-text">HINT</div>
               <div className="hint-lights">
                 {Array.from({ length: MAX_HINTS }, (_, i) => (
@@ -438,13 +438,13 @@ export default function NameChainGame() {
 
           {showHintDisplay && currentHint && (
             <div className="hint-display-panel">
-              <div className="hint-display-header">\u2708\uFE0F FLIGHT HINT</div>
+              <div className="hint-display-header">✈️ FLIGHT HINT</div>
               <div className="hint-display-content">{currentHint}</div>
               <button
                 className="hint-display-close"
                 onClick={() => setShowHintDisplay(false)}
               >
-                \u00D7
+                ×
               </button>
             </div>
           )}
@@ -462,7 +462,7 @@ export default function NameChainGame() {
               className="close-button"
               onClick={() => setShowQuickStart(false)}
             >
-              \u00D7
+              ×
             </button>
             <aside className="rules-box">
               <h2>Welcome to DEPARTURES</h2>
@@ -473,13 +473,13 @@ export default function NameChainGame() {
               </p>
               <ul>
                 <li>Each guess must be a real word (3-10 letters)</li>
-                <li>Only 2 new letters per guess \u2014 reuse previous letters</li>
+                <li>Only 2 new letters per guess — reuse previous letters</li>
                 <li>You don't know the destination's length</li>
                 <li>
-                  Wrong length \u2192 you learn which letters are <em>in</em> the destination
+                  Wrong length → you learn which letters are <em>in</em> the destination
                 </li>
                 <li>
-                  Right length \u2192 full positional feedback: \uD83D\uDFE2 correct spot, \uD83D\uDFE1 wrong spot
+                  Right length → full positional feedback: 🟢 correct spot, 🟡 wrong spot
                 </li>
                 <li>3 rebooks and 5 hints available</li>
               </ul>
@@ -502,7 +502,7 @@ export default function NameChainGame() {
               className="close-button"
               onClick={() => setShowRules(false)}
             >
-              \u00D7
+              ×
             </button>
             <aside className="rules-box">
               <h2>Flight Plan</h2>
@@ -513,20 +513,20 @@ export default function NameChainGame() {
               <h3>Pre-Flight Instructions</h3>
               <ul>
                 <li>Each guess must be a real word (3-10 letters) to clear for takeoff</li>
-                <li>You may board with only 2 new letters per flight \u2014 all other letters must come from your carry-on</li>
+                <li>You may board with only 2 new letters per flight — all other letters must come from your carry-on</li>
                 <li>There are {MAX_GUESSES} flights available to reach your final destination</li>
-                <li>You do not know how long the destination name is \u2014 figuring that out is part of the puzzle</li>
+                <li>You do not know how long the destination name is — figuring that out is part of the puzzle</li>
               </ul>
 
               <h3>In-Flight Signals</h3>
               <ul>
                 <li><strong>SCAN mode</strong> (wrong length): You learn which of your letters appear in the destination</li>
                 <li><strong>LOCKED mode</strong> (right length): Full positional feedback activates</li>
-                <li>\uD83D\uDFE2 Letter secured in correct position</li>
-                <li>\uD83D\uDFE1 Letter in transit (right letter, wrong position)</li>
-                <li>\u2B1C Letter left at departure gate (not in destination)</li>
-                <li>\uD83D\uDD35 Letter is in the destination (SCAN mode)</li>
-                <li>\u2B1B Letter is not in the destination (SCAN mode)</li>
+                <li>🟢 Letter secured in correct position</li>
+                <li>🟡 Letter in transit (right letter, wrong position)</li>
+                <li>⬜ Letter left at departure gate (not in destination)</li>
+                <li>🔵 Letter is in the destination (SCAN mode)</li>
+                <li>⬛ Letter is not in the destination (SCAN mode)</li>
               </ul>
 
               <h3>In-Flight Services</h3>
@@ -535,7 +535,7 @@ export default function NameChainGame() {
                 <li>5 complimentary hints available with your call button</li>
               </ul>
 
-              <p>Letters confirmed present (via either mode) are added to your carry-on \u2014 reuse them freely.</p>
+              <p>Letters confirmed present (via either mode) are added to your carry-on — reuse them freely.</p>
               <p><em>Thank You for flying Departures Air</em></p>
             </aside>
           </div>
